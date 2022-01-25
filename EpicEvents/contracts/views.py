@@ -8,7 +8,9 @@ from .serializers import (ContractsListSerializer,
                           ContractDetailSerializer,
                           SaleUserContractCreationSerializer,
                           ManagerUserContractCreationSerializer)
-from .permission import ContractPermission
+from .permission import (SaleContractOrReadOnly,
+                         ManagementContractOrReadOnly,
+                         SupportContractOrReadOnly)
 from .models import Contract
 
 
@@ -27,18 +29,8 @@ class AllContractsViewSet(MultipleSerializerMixin, ModelViewSet):
 
     serializer_class = ContractsListSerializer
     detail_serializer_class = ContractDetailSerializer
-
-    permission_classes = [ContractPermission]
-
-    def get_queryset(self):
-        """ Recover a specific queryset based on user status. """
-
-        if self.request.user.status == 'Management':
-            queryset = Contract.objects.all()
-            return queryset
-        elif self.request.user.status == 'Sale':
-            queryset = Contract.objects.filter(sale_user=self.request.user)
-            return queryset
+    queryset = Contract.objects.all()
+    permission_classes = (SaleContractOrReadOnly | ManagementContractOrReadOnly |SupportContractOrReadOnly,)
 
     def create(self, request, *args, **kwargs):
         """ Override create function and used a specific serializer based on

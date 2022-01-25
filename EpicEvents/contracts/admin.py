@@ -7,16 +7,13 @@ class ContractAdmin(admin.ModelAdmin):
     list_display = ('title', 'id', 'client', 'created', 'sale_user', 'signed')
     search_fields = ('client__society_name', 'sale_user__username')
 
-    def get_queryset(self, request):
-        """ Recover the queryset to display based on user status. A sale
-        user can access only his own contracts however a manager can access
-        all contracts. """
-
-        queryset = super(ContractAdmin, self).get_queryset(request)
-        if request.user.status == 'Sale':
-            return queryset.filter(sale_user=request.user)
-
-        return queryset
+    def has_change_permission(self, request, obj=None):
+        """ Give permission at object level """
+        if obj is None:
+            return True
+        elif request.user.status == 'Management':
+            return obj
+        return obj.sale_user == request.user
 
     def get_form(self, request, obj=None, **kwargs):
         """ Display a form to create a new contract or update it based on
@@ -52,6 +49,10 @@ class ContractAdmin(admin.ModelAdmin):
             list_filter = ('client',
                            'sale_user',
                            'signed')
+            return list_filter
+
+        elif request.user.status == 'Support':
+            list_filter = ('client', )
             return list_filter
 
 
