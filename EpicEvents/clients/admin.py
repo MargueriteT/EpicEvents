@@ -3,6 +3,7 @@ from .models import Client
 from .forms import ClientSaleAdminForm, ClientManagementAdminForm
 from events.models import Event
 
+
 class ClientAdmin(admin.ModelAdmin):
 
     list_display = ('society_name', 'id', 'city_name', 'email', 'phonenumber',
@@ -10,15 +11,18 @@ class ClientAdmin(admin.ModelAdmin):
 
     search_fields = ('society_name', 'city_name', 'is_a_client')
 
+    def has_change_permission(self, request, obj=None):
+        """ Set permission at object level """
+        if obj is None:
+            return True
+        elif request.user.status == 'Management':
+            return obj
+        elif request.user.status == 'Sale':
+            return obj.sale_user == request.user or not obj.sale_user
+
     def get_queryset(self, request):
         """ Recover a specific queryset based on user status. """
         queryset = super(ClientAdmin, self).get_queryset(request)
-        if request.user.status == 'Support':
-            events = Event.objects.filter(support_user=request.user)
-            clients_id = []
-            for event in events:
-                clients_id.append(event.client.id)
-            return queryset.filter(id__in=clients_id)
         return queryset
 
     def get_form(self, request, obj=None, **kwargs):

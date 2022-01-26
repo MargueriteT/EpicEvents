@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from events.models import Event
 from .serializers import ClientsListSerializer,ClientDetailSerializer
-from .permission import ClientPermission
+from .permission import SupportClientOrReadOnly, ManagementClientOrReadOnly, SaleClientOrReadOnly
 from .models import Client
 
 class MultipleSerializerMixin:
@@ -25,23 +25,10 @@ class ClientsViewSet(MultipleSerializerMixin, ModelViewSet):
 
     serializer_class = ClientsListSerializer
     detail_serializer_class = ClientDetailSerializer
-    permission_classes = [ClientPermission]
+    queryset = Client.objects.all()
+    permission_classes = (SupportClientOrReadOnly | ManagementClientOrReadOnly | SaleClientOrReadOnly,)
 
-    def get_queryset(self):
-        """ Recover a specific queryset based on user status. """
 
-        if self.request.user.status == 'Management' or \
-            self.request.user.status == 'Sale':
-            queryset = Client.objects.all()
-            return queryset
-
-        elif self.request.user.status == 'Support':
-            events = Event.objects.filter(support_user=self.request.user)
-            clients_id = []
-            for event in events:
-                clients_id.append(event.client.id)
-            queryset = Client.objects.filter(id__in=clients_id)
-            return queryset
 
 
 
