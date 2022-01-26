@@ -11,19 +11,16 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ('client__society_name', 'sale_user__username',
                      'support_user__username', 'event_title', 'status')
 
-    def get_queryset(self, request):
-        """ Recover the queryset to display based on user status and
-        username """
-
-        queryset = super(EventAdmin, self).get_queryset(request)
-        if request.user.status == 'Management':
-            return queryset
-
-        elif request.user.status == 'Sale':
-            return queryset.filter(sale_user=request.user)
-
+    def has_change_permission(self, request, obj=None):
+        """ Set permission at object level """
+        if obj is None:
+            return True
+        elif request.user.status == 'Management':
+            return obj
         elif request.user.status == 'Support':
-            return queryset.filter(support_user=request.user)
+            return obj.support_user == request.user
+        elif request.user.status == 'Sale':
+            return obj.sale_user == request.user
 
     def get_form(self, request, obj=None, **kwargs):
         """ Display a form based on user status """

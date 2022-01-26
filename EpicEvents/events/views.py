@@ -10,8 +10,7 @@ from .serializers import (EventsListSerializer,
                            ManagerEventCreationSerializer,
                            SaleEventCreationSerializer,
                            PartialUpdateEventCreationSerializer)
-from .permission import (SupportEventPermission,
-                         SaleAndManagementEventPermission)
+from .permission import SupportEventOrReadOnly
 from .models import Event
 
 class MultipleSerializerMixin:
@@ -33,12 +32,12 @@ class EventsViewSet(MultipleSerializerMixin, ModelViewSet):
     serializer_class = EventsListSerializer
     detail_serializer_class = EventDetailSerializer
     update_serializer_class = PartialUpdateEventCreationSerializer
+    queryset = Event.objects.all()
 
-    permission_classes = \
-        [SupportEventPermission|SaleAndManagementEventPermission]
+    permission_classes = [SupportEventOrReadOnly]
 
-    def get_queryset(self):
-        """ Recover a specific queryset based on user status. """
+    """def get_queryset(self):
+         Recover a specific queryset based on user status.
 
         if self.request.user.status == 'Management':
             queryset = Event.objects.all()
@@ -50,7 +49,7 @@ class EventsViewSet(MultipleSerializerMixin, ModelViewSet):
 
         elif self.request.user.status == 'Support':
             queryset = Event.objects.filter(support_user=self.request.user)
-            return queryset
+            return queryset"""
 
 
     def create(self, request, *args, **kwargs):
